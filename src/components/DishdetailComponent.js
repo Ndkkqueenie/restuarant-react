@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { Component } from 'react';
 import { Card, CardImg, CardText, CardBody,
-    CardTitle, Breadcrumb, BreadcrumbItem } from 'reactstrap';
+    CardTitle, Breadcrumb, BreadcrumbItem, Button, Modal, ModalHeader, ModalBody,
+    Form, FormGroup, Input, Label, FormFeedback} from 'reactstrap';
 import { Link } from 'react-router-dom';
 
     function RenderDish({dish}) {
@@ -48,7 +49,100 @@ import { Link } from 'react-router-dom';
             )
         }
     }
+    
+    class CommentForm extends Component {
 
+        constructor(props) {
+            super(props);
+            this.toggleModal = this.toggleModal.bind(this);
+            this.handleSubmit = this.handleSubmit.bind(this);
+            this.state = {
+                username: '',
+                isModalOpen: false,
+                touched: {
+                    username: false
+                }
+            };
+          }
+
+        toggleModal() {
+            this.setState({
+                isModalOpen: !this.state.isModalOpen
+            });
+        }
+  
+        handleSubmit(event) {
+          this.toggleModal();
+          alert("Rating: " + this.rating.value + " Username: " + this.username.value
+              + " Comment: " + this.comment.value);
+          event.preventDefault();
+        }
+
+        handleBlur = (field) => (evt) => {
+            this.setState({
+                touched: {...this.state.touched, [field]: true }
+            });
+        }
+
+        validate(username) {
+            const errors = {
+                username: ''
+            };
+
+            if (this.state.touched.username && username.length < 3)
+            errors.username = 'Must be >= 3 Characters';
+            else if (this.state.touched.username && username.length > 15)
+            errors.username = 'Must be <= 15 Characters'; 
+
+            return errors
+        }
+
+        render(){
+            const errors = this.validate(this.state.username);
+            return (
+                <div>
+                    <Button outline onClick={this.toggleModal}><span className="fa fa-pencil fa-lg"></span>Submit Comment</Button>
+                    <Modal isOpen={this.state.isModalOpen} toggle={this.toggleModal}>
+                        <ModalHeader toggle={this.toggleModal}>Submit Comment</ModalHeader>
+                            <ModalBody>
+                                <Form onSubmit={this.handleSubmit}>
+                                    <FormGroup>
+                                        <Label htmlFor="rating">Rating</Label>
+                                        <Input type="select" name="rating" id="rating" 
+                                        innerRef={(input) => this.rating = input} >
+                                            <option>1</option>
+                                            <option>2</option>
+                                            <option>3</option>
+                                            <option>4</option>
+                                            <option>5</option>
+                                        </Input>
+                                    </FormGroup>
+                                    <FormGroup>
+                                        <Label htmlFor="username">Your Name</Label>
+                                        <Input type="username" id="username" name="username"
+                                            innerRef={(input) => this.username = input} 
+                                            valid={errors.username === ''}
+                                            invalid={errors.username !== ''}
+                                            onBlur={this.handleBlur('username')}
+                                        />
+                                        <FormFeedback>{errors.username}</FormFeedback>
+                                    </FormGroup>
+                                    <FormGroup>
+                                        <Label htmlFor="comment"> Comment</Label>
+                                        <Input type="textarea" name="comment" id="comment"
+                                            rows="6"
+                                            className="form-control"
+                                            innerRef={(input) => this.comment = input}>
+                                        </Input>
+                                    </FormGroup>
+                                    <Button type="submit" value="submit" color="primary">Submit</Button>
+                                </Form>
+                            </ModalBody>
+                    </Modal>
+                </div>
+            );
+        }
+    };
 
     const DishDetail = (props) => {
 
@@ -72,6 +166,9 @@ import { Link } from 'react-router-dom';
                     </div>
                     <div className="col-12 col-md-5 m-1">
                         <RenderComments comments={props.comments} />
+                        <div style={{marginLeft: 15}}>
+                        <CommentForm/>
+                        </div>
                     </div>
                 </div>
                 </div>
