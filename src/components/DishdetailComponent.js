@@ -18,7 +18,7 @@ import { Link } from 'react-router-dom';
         );
     }
 
-    function RenderComments({comments}){
+    function RenderComments({comments, addComment, dishId}) {
         if (comments != null){
             let comms = comments.map((comm, i) => {
                 let date = new Intl.DateTimeFormat('en-US', {
@@ -39,6 +39,7 @@ import { Link } from 'react-router-dom';
                 <div className="col-12 m-1">
                     <h4>Comments</h4>
                     <div>{comms}</div>
+                    <CommentForm dishId={dishId} addComment={addComment} />
                 </div>
                 
             );
@@ -73,9 +74,7 @@ import { Link } from 'react-router-dom';
   
         handleSubmit(event) {
           this.toggleModal();
-          alert("Rating: " + this.rating.value + " Username: " + this.username.value
-              + " Comment: " + this.comment.value);
-          event.preventDefault();
+          this.props.addComment(this.props.dishId, this.rating.value, this.author.value, this.comment.value);
         }
 
         handleBlur = (field) => (evt) => {
@@ -165,10 +164,10 @@ import { Link } from 'react-router-dom';
                         <RenderDish dish={props.dish} />
                     </div>
                     <div className="col-12 col-md-5 m-1">
-                        <RenderComments comments={props.comments} />
-                        <div style={{marginLeft: 15}}>
-                        <CommentForm/>
-                        </div>
+                        <RenderComments comments={props.comments}
+                            addComment={props.addComment}
+                            dishId={props.dish.id}
+                        />
                     </div>
                 </div>
                 </div>
