@@ -1,10 +1,14 @@
 import React, { Component } from 'react';
-import { Card, CardImg, CardText, CardBody,
-    CardTitle, Breadcrumb, BreadcrumbItem, Button, Modal, ModalHeader, ModalBody,
-    Form, FormGroup, Input, Label, FormFeedback} from 'reactstrap';
+import { Card, CardImg, CardText, CardBody,CardTitle, Breadcrumb, 
+    BreadcrumbItem, Button, Modal, ModalHeader, ModalBody, Row, Label} from 'reactstrap';
 import { Link } from 'react-router-dom';
 import { Loading } from './LoadingComponent';
 import { baseUrl } from '../shared/baseUrl';
+import { Control, Form, Errors } from 'react-redux-form';
+
+const required = (val) => val && val.length;
+const maxLength = (len) => (val) => !(val) || (val.length <= len);
+const minLength = (len) => (val) => val && (val.length >= len);
 
     function RenderDish({dish}) {
         return(
@@ -20,7 +24,7 @@ import { baseUrl } from '../shared/baseUrl';
         );
     }
 
-    function RenderComments({comments, addComment, dishId}) {
+    function RenderComments({comments, postComment, dishId}) {
         if (comments != null){
             let comms = comments.map((comm, i) => {
                 let date = new Intl.DateTimeFormat('en-US', {
@@ -41,7 +45,7 @@ import { baseUrl } from '../shared/baseUrl';
                 <div className="col-12 m-1">
                     <h4>Comments</h4>
                     <div>{comms}</div>
-                    <CommentForm dishId={dishId} addComment={addComment} />
+                    <CommentForm dishId={dishId} postComment={postComment} />
                 </div>
                 
             );
@@ -60,11 +64,7 @@ import { baseUrl } from '../shared/baseUrl';
             this.toggleModal = this.toggleModal.bind(this);
             this.handleSubmit = this.handleSubmit.bind(this);
             this.state = {
-                author: '',
                 isModalOpen: false,
-                touched: {
-                    author: false
-                }
             };
           }
 
@@ -73,71 +73,71 @@ import { baseUrl } from '../shared/baseUrl';
                 isModalOpen: !this.state.isModalOpen
             });
         }
-  
+
+        
         handleSubmit(values) {
             console.log('Current State is: ' + JSON.stringify(values));
-            alert('Current State is: ' + JSON.stringify(values));
-            this.props.addComment(this.props.dishId, values.rating, values.author, values.comment);
-        }
-
-        handleBlur = (field) => (evt) => {
-            this.setState({
-                touched: {...this.state.touched, [field]: true }
-            });
-        }
-
-        validate(author) {
-            const errors = {
-                author: ''
-            };
-
-            if (this.state.touched.author && author.length < 3)
-            errors.author = 'Must be >= 3 Characters';
-            else if (this.state.touched.author && author.length > 15)
-            errors.author = 'Must be <= 15 Characters'; 
-
-            return errors
+            this.props.postComment(this.props.dishId, values.rating, values.author, values.comment);
         }
 
         render(){
-            const errors = this.validate(this.state.author);
             return (
                 <div>
                     <Button outline onClick={this.toggleModal}><span className="fa fa-pencil fa-lg"></span>Submit Comment</Button>
                     <Modal isOpen={this.state.isModalOpen} toggle={this.toggleModal}>
                         <ModalHeader toggle={this.toggleModal}>Submit Comment</ModalHeader>
                             <ModalBody>
-                                <Form onSubmit={(values) => this.handleSubmit(values)}>
-                                    <FormGroup>
-                                        <Label htmlFor="rating">Rating</Label>
-                                        <Input type="select" name="rating" id="rating" 
-                                        innerRef={(input) => this.rating = input} >
-                                            <option>1</option>
-                                            <option>2</option>
-                                            <option>3</option>
-                                            <option>4</option>
-                                            <option>5</option>
-                                        </Input>
-                                    </FormGroup>
-                                    <FormGroup>
-                                        <Label htmlFor="author">Your Name</Label>
-                                        <Input type="username" id="author" name="author"
-                                            innerRef={(input) => this.author = input} 
-                                            valid={errors.author === ''}
-                                            invalid={errors.author !== ''}
-                                            onBlur={this.handleBlur('author')}
+                            <Form model="comment" onSubmit={(values) => this.handleSubmit(values)}>
+                                <Row className="form-group" style={{margin: 8}} >
+                                    <Label htmlFor="rating">Rating</Label>
+                                    <Control.select model=".rating"
+                                        name="rating"
+                                        value={this.rating} 
+                                        id="rating"
+                                        className="form-control"
+                                    >
+                                        <option>1</option>
+                                        <option>2</option>
+                                        <option>3</option>
+                                        <option>4</option>
+                                        <option>5</option>
+                                    </Control.select>
+                                </Row>
+                                <Row className="form-group" style={{margin: 8}}>
+                                    <Label htmlFor="author">Your Name</Label>
+                                    <Control.text 
+                                        model=".author" 
+                                        id="author" 
+                                        name="author"
+                                        placeholder="Full Name"
+                                        className="form-control"
+                                        validators={{
+                                            required, minLength: minLength(3), maxLength: maxLength(15)
+                                        }}
                                         />
-                                        <FormFeedback>{errors.username}</FormFeedback>
-                                    </FormGroup>
-                                    <FormGroup>
-                                        <Label htmlFor="comment"> Comment</Label>
-                                        <Input type="textarea" name="comment" id="comment"
-                                            rows="6"
-                                            className="form-control"
-                                            innerRef={(input) => this.comment = input}>
-                                        </Input>
-                                    </FormGroup>
-                                    <Button type="submit" value="submit" color="primary">Submit</Button>
+                                    <Errors
+                                        className="text-danger"
+                                        model=".author"
+                                        show="touched"
+                                        messages={{
+                                            required: 'Required',
+                                            minLength: 'Must be greater than 2 characters',
+                                            maxLength: 'Must be 15 characters or less'
+                                        }}
+                                    />
+                                </Row>
+                                <Row className="form-group" style={{margin: 8}}>
+                                    <Label htmlFor="comment">Comment</Label>
+                                    <Control.textarea 
+                                        model=".comment" 
+                                        id="comment" 
+                                        name="comment"
+                                        rows="6"
+                                        className="form-control"
+                                        >
+                                    </Control.textarea>
+                                </Row>
+                                    <Button type="submit" color="primary">Submit</Button>
                                 </Form>
                             </ModalBody>
                     </Modal>
@@ -186,7 +186,7 @@ import { baseUrl } from '../shared/baseUrl';
                     </div>
                     <div className="col-12 col-md-5 m-1">
                         <RenderComments comments={props.comments}
-                            addComment={props.addComment}
+                            postComment={props.postCommentt}
                             dishId={props.dish.id}
                         />
                     </div>
